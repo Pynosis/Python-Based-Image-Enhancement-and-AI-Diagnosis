@@ -1,4 +1,6 @@
 import streamlit as st
+from modules.auth import login
+
 
 def show():
     st.markdown("""
@@ -77,48 +79,58 @@ def show():
         </style>
     """, unsafe_allow_html=True)
 
-    # Center the login box
+    # ── Center the login box ───────────────────────────────────
     col1, col2, col3 = st.columns([1, 1.2, 1])
 
     with col2:
-        st.markdown('<div class="login-title">Painosis Login</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-subtitle">Medical Image Enhancement & AI Diagnosis</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-title">Painosis Login</div>',
+                    unsafe_allow_html=True)
+        st.markdown('<div class="login-subtitle">Medical Image Enhancement & AI Diagnosis</div>',
+                    unsafe_allow_html=True)
 
         with st.form("login_form"):
-            email = st.text_input("", placeholder="Username or Email")
+            username = st.text_input("", placeholder="Username")
             password = st.text_input("", placeholder="Password", type="password")
 
-            st.markdown('<div class="forgot-link">Forgot Username or Password?</div>', unsafe_allow_html=True)
+            st.markdown('<div class="forgot-link">Forgot Username or Password?</div>',
+                        unsafe_allow_html=True)
 
             submitted = st.form_submit_button("Login")
 
             if submitted:
-                if email == "" or password == "":
+                if not username or not password:
                     st.error("Please fill in all fields.")
                 else:
-                    # Temporary hardcoded login for testing
-                    # Replace with DB auth later
-                    if email == "doctor@gmail.com" and password == "123":
-                        st.session_state.logged_in = True
-                        st.session_state.username = "fizza"
-                        st.session_state.name = "Fizza Baig"
-                        st.session_state.role = "Doctor"
-                        st.session_state.user_id = 1
-                        st.session_state.page = "upload"
-                        st.rerun()
-                    elif email == "admin@gmail.com" and password == "123":
-                        st.session_state.logged_in = True
-                        st.session_state.username = "admin"
-                        st.session_state.name = "Admin"
-                        st.session_state.role = "Admin"
-                        st.session_state.user_id = 2
-                        st.session_state.page = "admin"
+                    with st.spinner("Logging in..."):
+                        success, message = login(username, password)
+
+                    if success:
+                        role = st.session_state.role
+
+                        # route to correct landing page based on role
+                        if role == "admin":
+                            st.session_state.page = "admin"
+                        elif role in ("doctor", "radiologist"):
+                            st.session_state.page = "upload"
+                        elif role == "researcher":
+                            st.session_state.page = "upload"
+
                         st.rerun()
                     else:
-                        st.error("Incorrect username or password.")
+                        # show the exact message from auth.py
+                        # (pending, rejected, suspended, wrong password)
+                        if "pending" in message.lower() or "rejected" in message.lower():
+                            st.session_state.page = "pending"
+                            st.session_state.pending_message = message
+                            st.rerun()
+                        else:
+                            st.error(message)
 
-        # Signup link
-        st.markdown('<div class="signup-link">New User? <span id="signup">create an account</span></div>', unsafe_allow_html=True)
+        # ── Sign up link ───────────────────────────────────────
+        st.markdown(
+            '<div class="signup-link">New User? <span>Create an account</span></div>',
+            unsafe_allow_html=True
+        )
 
         col_a, col_b, col_c = st.columns([1, 2, 1])
         with col_b:

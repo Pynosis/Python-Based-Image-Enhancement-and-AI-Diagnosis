@@ -70,7 +70,7 @@ def validate_image_for_diagnosis(
     total_pixels = height * width
     dark_ratio = dark_pixels / total_pixels
 
-    if dark_ratio < 0.15:
+    if dark_ratio < 0.05:
         return False, "This image does not appear to be a brain MRI scan. Brain MRI scans typically have a dark background."
 
     # check 4: image must have meaningful content (not all black)

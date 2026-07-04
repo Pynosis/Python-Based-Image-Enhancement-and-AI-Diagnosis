@@ -1,25 +1,11 @@
 import streamlit as st
 from modules.auth import login
+from datetime import datetime, timedelta
 
 
-def show():
+def show(cookie_manager=None):
     st.markdown("""
         <style>
-        .login-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f2f6;
-        }
-        .login-box {
-            background: white;
-            padding: 50px 40px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 420px;
-        }
         .login-title {
             font-size: 28px;
             font-weight: 700;
@@ -71,15 +57,9 @@ def show():
             margin-top: 24px;
             color: #555;
         }
-        .signup-link span {
-            color: #028090;
-            font-weight: 600;
-            cursor: pointer;
-        }
         </style>
     """, unsafe_allow_html=True)
 
-    # ── Center the login box ───────────────────────────────────
     col1, col2, col3 = st.columns([1, 1.2, 1])
 
     with col2:
@@ -89,8 +69,8 @@ def show():
                     unsafe_allow_html=True)
 
         with st.form("login_form"):
-            username = st.text_input("", placeholder="Username")
-            password = st.text_input("", placeholder="Password", type="password")
+            username  = st.text_input("", placeholder="Username")
+            password  = st.text_input("", placeholder="Password", type="password")
 
             st.markdown('<div class="forgot-link">Forgot Username or Password?</div>',
                         unsafe_allow_html=True)
@@ -105,9 +85,15 @@ def show():
                         success, message = login(username, password)
 
                     if success:
-                        role = st.session_state.role
+                        # save token to cookie for session persistence
+                        if cookie_manager:
+                            cookie_manager.set(
+                                "session_token",
+                                st.session_state["session_token"],
+                                expires_at=datetime.now() + timedelta(hours=24)
+                            )
 
-                        # route to correct landing page based on role
+                        role = st.session_state.role
                         if role == "admin":
                             st.session_state.page = "admin"
                         elif role in ("doctor", "radiologist"):
@@ -116,9 +102,8 @@ def show():
                             st.session_state.page = "upload"
 
                         st.rerun()
+
                     else:
-                        # show the exact message from auth.py
-                        # (pending, rejected, suspended, wrong password)
                         if "pending" in message.lower() or "rejected" in message.lower():
                             st.session_state.page = "pending"
                             st.session_state.pending_message = message
@@ -126,7 +111,6 @@ def show():
                         else:
                             st.error(message)
 
-        # ── Sign up link ───────────────────────────────────────
         st.markdown(
             '<div class="signup-link">New User? <span>Create an account</span></div>',
             unsafe_allow_html=True

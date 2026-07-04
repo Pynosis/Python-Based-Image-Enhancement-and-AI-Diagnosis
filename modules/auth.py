@@ -20,7 +20,6 @@ from datetime import datetime, timedelta
 from modules.database import get_db_connection, execute_query, execute_write
 from modules.audit import log_action, LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT, SESSION_EXPIRED, ACCESS_DENIED
 from dotenv import load_dotenv
-from streamlit_cookies_manager import EncryptedCookieManager
 load_dotenv()
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback_secret_change_this")
@@ -262,6 +261,14 @@ def logout():
         conn.close()
 
         log_action(user_id, username, role, LOGOUT, "User logged out")
+
+    # clear cookie
+    try:
+        import extra_streamlit_components as stx
+        cookie_manager = stx.CookieManager()
+        cookie_manager.delete("session_token")
+    except:
+        pass
 
     st.session_state.clear()
     st.rerun()

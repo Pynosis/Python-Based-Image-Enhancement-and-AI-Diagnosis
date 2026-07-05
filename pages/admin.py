@@ -270,17 +270,21 @@ def show():
 
                     with col3:
                         if st.button("🗑️ Delete",
-                                     key=f"delete_{user['username']}",
-                                     use_container_width=True,
-                                     type="primary"):
+                                    key=f"delete_{user['username']}",
+                                    use_container_width=True,
+                                    type="primary"):
                             delete_user(user["username"])
                             st.error(f"{user['full_name']} deleted.")
                             st.rerun()
 
-    # ── Logout — always visible outside tabs ───────────────────
+    # ── Bottom navigation ──────────────────────────────────────────
     st.divider()
-    col_l, col_r = st.columns([1, 5])
+    col_l, col_m, col_r = st.columns([1, 1, 4])
     with col_l:
+        if st.button("🔍 Audit Log", use_container_width=True):
+            st.session_state.page = "audit_log"
+            st.rerun()
+    with col_m:
         if st.button("🚪 Logout", use_container_width=True):
             from modules.auth import logout
             logout()

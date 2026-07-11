@@ -46,10 +46,10 @@ def show_license(file_path, username):
 def get_pending_approvals():
     return execute_query(
         """SELECT full_name, username, email, role, pmdc_license_file_path, created_at
-           FROM users
-           WHERE is_approved = 0
-           AND role IN ('doctor', 'radiologist')
-           AND rejection_reason IS NULL""",
+        FROM users
+        WHERE is_approved = 0
+        AND role IN ('doctor', 'radiologist')
+        AND rejection_reason IS NULL""",
         fetch_all=True
     )
 
@@ -57,10 +57,10 @@ def get_pending_approvals():
 def get_all_users():
     return execute_query(
         """SELECT id, full_name, username, email, role,
-                  is_approved, is_active, last_login, created_at
-           FROM users
-           WHERE role != 'admin'
-           ORDER BY created_at DESC""",
+        is_approved, is_active, last_login, created_at
+        FROM users
+        WHERE role != 'admin'
+        ORDER BY created_at DESC""",
         fetch_all=True
     )
 
@@ -68,29 +68,27 @@ def get_all_users():
 def approve_doctor(doctor_username):
     execute_write(
         """UPDATE users
-           SET is_approved = 1,
-               approved_by = %s,
-               approved_at = %s
-           WHERE username = %s""",
+        SET is_approved = 1,
+        approved_by = %s,
+        approved_at = %s
+        WHERE username = %s""",
         (st.session_state.user_id, datetime.utcnow(), doctor_username)
     )
-    log_action(st.session_state.user_id, st.session_state.username,
-               st.session_state.role, USER_APPROVED,
-               f"Approved doctor: {doctor_username}")
+    log_action(st.session_state.user_id, st.session_state.username, st.session_state.role, USER_APPROVED, f"Approved doctor: {doctor_username}")
 
 
 def reject_doctor(doctor_username, reason):
     execute_write(
         """UPDATE users
-           SET rejection_reason = %s,
-               approved_by = %s,
-               approved_at = %s
-           WHERE username = %s""",
+        SET rejection_reason = %s,
+        approved_by = %s,
+        approved_at = %s
+        WHERE username = %s""",
         (reason, st.session_state.user_id, datetime.utcnow(), doctor_username)
     )
     log_action(st.session_state.user_id, st.session_state.username,
-               st.session_state.role, USER_REJECTED,
-               f"Rejected doctor: {doctor_username}. Reason: {reason}")
+                st.session_state.role, USER_REJECTED,
+                f"Rejected doctor: {doctor_username}. Reason: {reason}")
 
 
 def suspend_user(username):
@@ -98,9 +96,7 @@ def suspend_user(username):
         "UPDATE users SET is_active = 0, session_token = NULL WHERE username = %s",
         (username,)
     )
-    log_action(st.session_state.user_id, st.session_state.username,
-               st.session_state.role, USER_SUSPENDED,
-               f"Suspended user: {username}")
+    log_action(st.session_state.user_id, st.session_state.username, st.session_state.role, USER_SUSPENDED, f"Suspended user: {username}")
 
 
 def activate_user(username):
@@ -108,16 +104,12 @@ def activate_user(username):
         "UPDATE users SET is_active = 1 WHERE username = %s",
         (username,)
     )
-    log_action(st.session_state.user_id, st.session_state.username,
-               st.session_state.role, USER_ACTIVATED,
-               f"Activated user: {username}")
+    log_action(st.session_state.user_id, st.session_state.username, st.session_state.role, USER_ACTIVATED, f"Activated user: {username}")
 
 
 def delete_user(username):
     execute_write("DELETE FROM users WHERE username = %s", (username,))
-    log_action(st.session_state.user_id, st.session_state.username,
-               st.session_state.role, USER_DELETED,
-               f"Deleted user: {username}")
+    log_action(st.session_state.user_id, st.session_state.username, st.session_state.role, USER_DELETED, f"Deleted user: {username}")
 
 
 # ── UI ─────────────────────────────────────────────────────────
@@ -201,9 +193,7 @@ def show():
                     col_approve, col_reject = st.columns(2)
 
                     with col_approve:
-                        if st.button("✅ Approve",
-                                     key=f"approve_{doctor['username']}",
-                                     use_container_width=True):
+                        if st.button("✅ Approve", key=f"approve_{doctor['username']}", use_container_width=True):
                             approve_doctor(doctor["username"])
                             st.success(f"{doctor['full_name']} approved!")
                             st.rerun()
@@ -214,9 +204,7 @@ def show():
                             key=f"reason_{doctor['username']}",
                             placeholder="Enter reason before rejecting"
                         )
-                        if st.button("❌ Reject",
-                                     key=f"reject_{doctor['username']}",
-                                     use_container_width=True):
+                        if st.button("❌ Reject", key=f"reject_{doctor['username']}", use_container_width=True):
                             if reason:
                                 reject_doctor(doctor["username"], reason)
                                 st.success(f"{doctor['full_name']} rejected.")
@@ -254,16 +242,12 @@ def show():
 
                     with col1:
                         if user["is_active"]:
-                            if st.button("🚫 Suspend",
-                                         key=f"suspend_{user['username']}",
-                                         use_container_width=True):
+                            if st.button("🚫 Suspend", key=f"suspend_{user['username']}", use_container_width=True):
                                 suspend_user(user["username"])
                                 st.warning(f"{user['full_name']} suspended.")
                                 st.rerun()
                         else:
-                            if st.button("✅ Activate",
-                                         key=f"activate_{user['username']}",
-                                         use_container_width=True):
+                            if st.button("✅ Activate", key=f"activate_{user['username']}", use_container_width=True):
                                 activate_user(user["username"])
                                 st.success(f"{user['full_name']} activated.")
                                 st.rerun()
